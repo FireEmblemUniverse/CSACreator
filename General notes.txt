@@ -1,0 +1,59 @@
+CSA Maker:
+
+Based on FEditor Adv.
+
+There should be a table of 0x14 bytes.
+20 bytes each?
+0: frame data pointer (uncompressed list of 0x85/0x86/0x80 commands)
+4: RTL OAM (uncompressed 0xc byte entries, ending with 'Term')
+8: LTR OAM
+C: RTL_BG OAM
+10:LTR_BG OAM
+
+OAM: 12 byte structure:
+0: ??
+1: shape - sq = 0, hz = 40h, vt = 80h
+2: ??
+3: size (w*h) - set bit 0x10 if flipped
+  32/64: 0xC0
+  16/8:  0x80
+  4:     0x40
+  2/1:   0x00
+4: sheet_y<<5|sheet_x (tile number, basically)
+6: vram_x (screen position, pixels)
+8: vram_y (same)
+
+Damn, looks like grit can't do the oam optimizing that feditor does. Need to make one for that, then.
+
+
+Object frames: 480x160 (left is foreground, right is background). 16 colours, seems like each frame has its own palette.
+
+Expected script format:
+
+C commands are 0x85:
+C00     = 8500:0000
+C000040 = 8500:0040
+C1F     = 8500:001F
+C02F948 = 8502:F948
+
+Frames are 0x86:
+
+    O p- blank.PNG      ; obj image
+    B p- blankbg.PNG    ; bg image
+    2                   ; duration
+
+0: duration (short)
+2: frame index (byte, contains bg and obj) (i think this is just a counter?)
+3: 0x86
+4: obj sheet pointer (compressed graphics data. We get 128 tiles here, 32x4 image.)
+8: oam index (multiple of C) (offset of oam data, c bytes per entry?)
+c: bgoam index (multiple of C) (same here. gonna guess the bg is the back obj, not the actual bg.)
+10:bgsheet pointer (compressed graphics data)
+14:obj palette pointer
+18:bg palette pointer
+1c:tsa pointer //my addition
+
+Terminators are 0x80:
+miss terminator = 0800:0100
+anim terminator = 0800:0000
+

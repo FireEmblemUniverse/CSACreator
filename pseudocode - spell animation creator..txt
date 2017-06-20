@@ -1,0 +1,37 @@
+pseudocode - spell animation creator.
+
+input = script
+
+1. open file
+  make sure it exists
+
+2. create frame data event file
+  C1F -> WORD 0x8500001F etc
+  0x86 commands are
+    O ObjImage.png (480x160, 16 colours indexed)
+    B BGImage.png (256x160 (150?), 16 colours indexed)
+    25
+  becomes
+  SHORT Duration
+  BYTE index 0x86
+  POIN OBJImage_index
+  WORD (FGOAM*12) (BGOAM*12)
+  POIN BGImage_index OBJPalette_index BGPalette_index TSAPointer_index
+
+3. Process BGImages as with skill anims
+  use grit, incbin the image, palette, tsa and set up event file.
+  Write to free space under labels TSA, Palette, Image
+
+4. Process ObjImages (fg and bg)
+  generate the oam and store it uncompressed as a list of 12-byte things
+  (do it for both left and right)
+  Need to do:
+    take the image and split into two images, fg and bg.
+    Count the used tiles for each, make sure total is less than 128
+    set the index of the first one.
+    calculate optimum oam, set the vram and such
+    Write them to free space under labels RTLFG, LTRFG, RTLBG, LTRBG, Palette
+
+5. create the table, set the CSA table entry.
+  #define setCSATable(index, framedata, RTLFG, LTRFG, RTLBG, LTRBG) "PUSH; ORG CSATable+(index*20); POIN framedata RTLFG LTRFG RTLBG LTRBG; POP"
+  #define setCustomSpell(index) "PUSH; ORG SpellTable+(index*4); POIN CSAEngine; POP"

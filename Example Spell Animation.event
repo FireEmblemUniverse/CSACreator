@@ -1,0 +1,81 @@
+Example Spell Animation.event file
+
+//assumed to be free space
+
+//the file name is based on the script's file name converted to label format
+//if it starts with a number, prepend _
+//replace any spaces, +-/* with _
+
+/*
+The following should be in the Master Spell Animation installer:
+
+
+//Macros
+#define setCSATable(index, framedata, RTLFG, LTRFG, RTLBG, LTRBG) "PUSH; ORG CSATable+(index*20); POIN framedata RTLFG LTRFG RTLBG LTRBG; POP"
+#define setCustomSpell_dim(index) "PUSH; ORG SpellTable+(index*4); POIN CSAEngine|1; POP"
+#define setCustomSpell_nodim(index) "PUSH; ORG SpellTable+(index*4); POIN CSAEngine_NoDim|1; POP"
+
+
+CSATable:
+#incbin BlankCSATable.dmp //this is 255*20 bytes of 00
+
+PUSH
+ORG $95d780
+CSAEngine:
+#incbin CSAEngine.dmp //the custom spell engine. All custom spells point here.
+POP
+
+#define CSAEngine_NoDim (some hardcoded value)
+
+*/
+
+setCSATable(index, spell_framedata, spell_rtlfg, spell_ltrfg, spell_rtlbg, spell_ltrbg)
+setCustomSpell_dim(index)
+
+//frame data uncompressed
+  spell_framedata:
+  WORD 0x85000000 //c00
+  WORD 0x85000000
+  SHORT 1; BYTE 0 0x86; POIN spell_objimage_0; WORD 0 108; POIN spell_bgimage_0 spell_objpal_0 spell_bgpal_0 spell_bgtsa_0 //0x86 commands are long
+  WORD 0x80000100 //miss terminator
+  WORD 0x8500001F //C1F
+  WORD 0x80000000 //Final terminator
+
+//OAM data
+  spell_rtlfg:
+  // is there an opening thing here?
+  BYTE 0x0 0x80 0x0 0x80 0x0 0x0 0xa4 0xff 0xe0 0xff 0x0 0x0 //12 byte struct that packs into OAM later
+  WORD 1 //frame terminator
+  BYTE bytes //OAM for frame 2
+  WORD 1
+  String(Term) //section terminator, most likely not needed
+
+  spell_ltrfg:
+  //same
+  //...etc
+
+//Image data
+  //BG data
+  spell_bgimage_0:
+  #incbin "spell_bgimage_0.img.bin"
+  spell_bgimage_11:
+  #incbin "spell_bgimage_1.img.bin"
+
+  //obj data
+  spell_objimage_0:
+  BYTE bytes (compressed 32*4 sheet)
+  spell_objimage_1:
+  BYTE bytes (compressed)
+
+//TSA data
+  spell_bgtsa_0:
+  #incbin "spell_bgtsa_0.map.bin"
+  spell_bgtsa_1:
+  #incbin "spell_bgtsa_1.map.bin"
+
+//Palette data
+  spell_objpal_0:
+  BYTE bytes (uncompressed)
+  spell_bgpal_0:
+  #incbin "spell_bgpal_0.pal.bin"
+
